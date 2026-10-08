@@ -32,7 +32,6 @@ dependencies = [
     "h5py",
     "joblib",
     "tqdm",
-    "modAL",
     "pyswarms",
 ]
 
@@ -50,4 +49,12 @@ packages = [
     "nerve_model",
     "localization",
     "selectivity_optimization",
+    "modAL",
+    "fiber_response",
+]
+
+[dependency-groups]
+platform = [
+    "fastapi[standard]>=0.128.8",
+    "pydantic>=2.13.5",
 ]

@@ -678,6 +678,30 @@ class Experiment:
 
         return recruitment_patterns
 
+    def compute_recruitment_patterns_from_activations(
+        self,
+        activations: np.ndarray
+    ) -> np.ndarray:
+        """Compute recruitment patterns without recomputing activations"""
+        recruitment_patterns = np.zeros(
+            (activations.shape[0],  # equal to stimulation_protocol.shape[0]
+             self.fiber_population.n_groups)
+        )
+
+        for group_idx in range(self.fiber_population.n_groups):
+            fibers_current_group = np.flatnonzero(
+                self.fiber_population.cluster_ids==group_idx
+            )
+            n_fibers_current_group = fibers_current_group.size
+
+            if n_fibers_current_group == 0:
+                continue # keep recruitment patter empty group at zero
+
+            recruitment_patterns[:, group_idx] = (
+                np.sum(activations[:, fibers_current_group], axis=1) / n_fibers_current_group
+            )
+        return recruitment_patterns
+
     def compute_selectivity_patterns(
         self,
         stimulation_protocols: np.ndarray,
