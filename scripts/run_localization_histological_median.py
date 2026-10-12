@@ -136,6 +136,7 @@ def main() -> None:
 
     full_inferred_experiment = load_pickle(inferred_experiment_path)
     true_experiment = load_pickle(true_experiment_path)
+    #breakpoint()
 
     fiber_population_ref = MotorFiberPopulation(
         n_internodes=true_experiment.fiber_population.n_internodes,

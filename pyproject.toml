@@ -33,6 +33,9 @@ dependencies = [
     "joblib",
     "tqdm",
     "pyswarms",
+    "python-multipart>=0.0.20",
+    "fastapi>=0.128.8",
+    "numpy2[fastapi]>=2.4.4",
 ]
 
 [project.optional-dependencies]
@@ -54,6 +57,10 @@ packages = [
 ]
 
 [dependency-groups]
+example = [
+    "httpx>=0.28.1",
+    "numpy>=2.0.2",
+]
 platform = [
     "fastapi[standard]>=0.128.8",
     "pydantic>=2.13.5",

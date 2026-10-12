@@ -1,3 +1,12 @@
+"""
+@file: simulate.py
+@author: Samuel Stolarik
+@description:
+    Simulation code which
+    communicates with the
+    original model code
+"""
+
 import scipy
 import numpy as np
 
@@ -27,10 +36,9 @@ def simulate_fibers(
     fiber_cluster_ids = experiment.fiber_population.cluster_ids
 
     simulation_result = {
-        "recruitment":  recruitment,
+        "recruitments":  recruitment,
         "activations":  activations,
         "potentials":   v_ext,
-        "cluster_ids":  fiber_cluster_ids
     }
 
     return simulation_result
