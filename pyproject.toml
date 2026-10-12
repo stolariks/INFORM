@@ -33,6 +33,8 @@ dependencies = [
     "joblib",
     "tqdm",
     "pyswarms",
+    "python-multipart>=0.0.20",
+    "fastapi>=0.128.8",
 ]
 
 [project.optional-dependencies]
