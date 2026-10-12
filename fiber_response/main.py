@@ -8,14 +8,18 @@
 
 from pathlib import Path
 from functools import lru_cache
-
+from typing import Annotated
 
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Depends
-from typing import Annotated
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 from fiber_response.dependencies import Settings, get_settings
 from fiber_response.routers import files, compute, experiment
+import fiber_response
+
+platform_root = Path(fiber_response.__path__[0])
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -31,10 +35,12 @@ app.include_router(compute.router)
 app.include_router(files.router)
 app.include_router(experiment.router)
 
+app.mount("/assets", StaticFiles(directory=platform_root/"public/assets"), name="static")
 
-@app.get("/")
-async def get_data_dir(settings: Annotated[Settings, Depends(get_settings)]):
-    return {"data_dir": settings.data_dir}
+@app.get("/", response_class=FileResponse)
+async def app_main():
+    global platform_root
+    return platform_root / "public/index.html"
 
 def main():
     args = parse_args()

@@ -13,6 +13,7 @@ from fastapi import (
 )
 from typing import Annotated
 import shutil
+import os
 from pathlib import Path
 
 from fiber_response.dependencies import Settings, get_settings
@@ -70,3 +71,16 @@ def upload_files(
     # On success return filenames
     return {"filenames": [file.filename for file in files]}
 
+@router.delete("/file")
+def delete_files(
+    filename: str,
+    settings: Annotated[Settings, Depends(get_settings)]
+):
+    ddir = settings.data_dir.resolve()
+    if not (ddir/filename).exists():
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            "File does not exist"
+        )
+
+    os.remove(ddir/filename)

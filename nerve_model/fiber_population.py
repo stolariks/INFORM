@@ -148,7 +148,7 @@ class MotorFiberPopulation:
         return cluster_locs, cluster_std, cluster_num
 
     @classmethod
-    def from_clusters(
+    def from_clusters(  # TODO: maybe this could be used with cluster_locs sampled inside fascicles
         cls,
         n_internodes: int,
         diameter_lims: tuple[float, float],
@@ -423,13 +423,171 @@ class MotorFiberPopulation:
             cluster_ids=cluster_ids,
         )
 
+    @staticmethod
+    def plot_mrg_internode_spacing(
+        spacing_internode,
+        # Values taken from code bellow in generate_mrg_node_locs
+        length_ranvier=1.0,
+        length_mysa=3.0,
+        length_flut=50.0,
+        length_stin=219.46,
+    ):
+        """Plots the physical compartments of an MRG repeat unit alongside the center-to-center
+
+        spacing distances (`spacing_internode`).
+        """
+        import matplotlib.pyplot as plt
+        # 1. Define ordered compartment sequence and their physical lengths
+        # (11 compartments total: Node -> MYSA -> FLUT -> 6x STIN -> FLUT -> MYSA -> Node)
+        comp_names = [
+            "Node",
+            "MYSA",
+            "FLUT",
+            "STIN 1",
+            "STIN 2",
+            "STIN 3",
+            "STIN 4",
+            "STIN 5",
+            "STIN 6",
+            "FLUT",
+            "MYSA",
+            "Node 2",
+        ]
+        comp_lengths = [
+            length_ranvier,
+            length_mysa,
+            length_flut,
+            length_stin,
+            length_stin,
+            length_stin,
+            length_stin,
+            length_stin,
+            length_stin,
+            length_flut,
+            length_mysa,
+            length_ranvier,
+        ]
+
+        # Color palette for distinct compartment types
+        color_map = {
+            "Node": "#2b5c8f",
+            "MYSA": "#1f1f1f",
+            "FLUT": "#d95f02",
+            "STIN": "#e6ab02",
+        }
+
+        # 2. Calculate physical boundaries and midpoints along the z-axis
+        comp_boundaries = np.zeros(len(comp_lengths) + 1)
+        comp_boundaries[1:] = np.cumsum(comp_lengths)
+
+        # Shift so that the first Node center is at z = 0
+        comp_boundaries -= length_ranvier / 2
+        comp_centers = (comp_boundaries[:-1] + comp_boundaries[1:]) / 2
+
+        # Setup plot
+        fig, (ax_fiber, ax_spacing) = plt.subplots(
+            2, 1, figsize=(14, 7), sharex=True, gridspec_kw={"height_ratios": [1, 2]}
+        )
+
+        # ---------------------------------------------------------
+        # Top Subplot: Drawn Fiber Compartments with Name Labels
+        # ---------------------------------------------------------
+        for i, name in enumerate(comp_names):
+            start = comp_boundaries[i]
+            width = comp_lengths[i]
+            c_type = name.split()[0]
+            color = color_map.get(c_type, "#999999")
+
+            # Draw cylinder box representing compartment
+            ax_fiber.barh(
+                y=0,
+                width=width,
+                left=start,
+                height=0.4,
+                color=color,
+                edgecolor="black",
+                linewidth=0.8,
+            )
+
+            # Plot compartment midpoint
+            ax_fiber.plot(comp_centers[i], 0, "r.", markersize=4)
+
+            # Annotate compartment name above/below to prevent overlap for narrow segments
+            is_narrow = width < 20.0
+            text_y = 0.35 if is_narrow and (i % 2 == 0) else 0.28
+            rotation = 90 if is_narrow else 0
+            font_size = 7 if is_narrow else 8.5
+            text_color = "black"
+
+            ax_fiber.text(
+                comp_centers[i],
+                text_y,
+                name,
+                ha="center",
+                va="bottom",
+                fontsize=font_size,
+                fontweight="bold",
+                color=text_color,
+                rotation=rotation,
+            )
+
+        ax_fiber.set_yticks([])
+        ax_fiber.set_title("MRG Fiber Compartment Anatomy", fontsize=12, fontweight="bold")
+        ax_fiber.set_ylim(-0.4, 0.9)
+
+        # ---------------------------------------------------------
+        # Bottom Subplot: Center-to-Center Spacing Steps
+        # ---------------------------------------------------------
+        for i, dist in enumerate(spacing_internode):
+            z_start = comp_centers[i]
+            z_end = comp_centers[i + 1]
+            z_mid = (z_start + z_end) / 2
+
+            # Draw step horizontal line connecting adjacent midpoints
+            ax_spacing.hlines(
+                y=dist,
+                xmin=z_start,
+                xmax=z_end,
+                colors="#2b5c8f",
+                linewidth=2,
+                label="spacing_internode" if i == 0 else "",
+            )
+            ax_spacing.plot([z_start, z_end], [dist, dist], "o", color="#2b5c8f", markersize=4)
+
+            # Annotate distance values above steps
+            y_offset = max(spacing_internode) * 0.03
+            ax_spacing.text(
+                z_mid,
+                dist + y_offset,
+                f"{dist:.1f} µm",
+                ha="center",
+                va="bottom",
+                fontsize=8,
+                rotation=45 if dist < 50 else 0,
+            )
+
+        ax_spacing.set_ylabel("Spacing Distance (µm)", fontsize=10)
+        ax_spacing.set_xlabel("Fiber Axial Position z (µm)", fontsize=10)
+        ax_spacing.set_title(
+            "Center-to-Center Spacing (`spacing_internode`) Between Midpoints",
+            fontsize=12,
+            fontweight="bold",
+        )
+        ax_spacing.grid(True, linestyle="--", alpha=0.5)
+
+        plt.tight_layout()
+        plt.savefig("internodes.svg")
+
+
     def generate_mrg_node_locs(self) -> None:
+        #breakpoint()
+        # TODO: understand if the generated node locations contain randomized delta offset
         """Generate MRG node locations and FEM node indexing for all fibers."""
-        length_mysa = 3.0
-        length_ranvier = 1.0
+        length_mysa = 3.0  # MYelin Sheet Attachment
+        length_ranvier = 1.0  # Node of ranvier
         n_nodes_per_fiber = self.n_nodes
 
-        node_ids = np.zeros((self.n_fibers, n_nodes_per_fiber))
+        node_ids = np.zeros((self.n_fibers, n_nodes_per_fiber))  # TODO: seems to be categorical array maping where fem is calculated? see bellow
         n_lbound = np.zeros(self.n_fibers, dtype=int)
         n_fem = np.zeros(self.n_fibers, dtype=int)
         n_prop = np.zeros(self.n_fibers, dtype=int)
@@ -443,16 +601,21 @@ class MotorFiberPopulation:
         ind_first_node = 0
         central_z = np.zeros(self.n_fibers)
 
+        #breakpoint()
         for i in tqdm(range(self.n_fibers), desc=""):
-            length_internode = 969.3 * np.log(self.diameters[i]) - 1144.6
+            length_internode = 969.3 * np.log(self.diameters[i]) - 1144.6  # total node-to-node length (repeat length), which includes the nodal gap plus all myelinated/paranodal segments between two nodes
+            # length_internode = node + 2*MYSA + 2*FLUT + 6*STIN
+
             length_flut = 2.5811 * self.diameters[i] + 19.59
-            length_stin = (
+            length_stin = (  # length of one of the six STIN sub-compartments (STIN = Stereotyped Internode)
+                # the substractions remove everything else and leave just the length of six internodal segments (6xSTIM) so it then needs to be devided by 6
                 length_internode
                 - length_ranvier
                 - (2 * length_mysa)
                 - (2 * length_flut)
             ) / 6
 
+            # see also image at: (see picture https://wmglab-duke.github.io/pyfibers/fiber_models.html#construction-of-model-fibers)
             spacing_internode = np.array(
                 [
                     (length_ranvier + length_mysa) / 2,
@@ -469,21 +632,26 @@ class MotorFiberPopulation:
                 ]
             )
 
-            n_fem_theor = int(np.floor(DEFAULT_FEM_LENGTH_MM * 1000 / length_internode))
-            n_bound_theor = (
+            # added for debug
+            # MotorFiberPopulation.plot_mrg_internode_spacing(spacing_internode)
+            # #breakpoint()
+            # kill the code after breakpoint
+
+            n_fem_theor = int(np.floor(DEFAULT_FEM_LENGTH_MM * 1000 / length_internode))  # ~ 13 => Theoretical number of internodes (nodes of Ranvier) that fit inside the 3D finite element simulation domain length (DEFAULT_FEM_LENGTH_MM).
+            n_bound_theor = (  # ~9 => leftover nodes that are not part of the active FEM area or propagation area, divided by 2 to split them equally between the left boundary (n_lbound) and right boundary (n_ubound).
                 (self.n_internodes + 1) - n_fem_theor - DEFAULT_PROPAGATION_NODES
             ) / 2
             n_lbound_theor = int(np.ceil(n_bound_theor))
 
-            spacing_fiber = np.tile(spacing_internode, self.n_internodes)
-            locs_fiber = np.concatenate(([0], np.cumsum(spacing_fiber)))
+            spacing_fiber = np.tile(spacing_internode, self.n_internodes)  # repeat internode spacing array for n_internode times => for 40 internodes this makes 440 compartments
+            locs_fiber = np.concatenate(([0], np.cumsum(spacing_fiber)))  # positions of each fiber compartment placed on one axis => 0 and 440 values => [441,]
             locs_fiber -= length_internode * (
                 n_lbound_theor + np.floor(n_fem_theor / 2)
-            )
+            )  # z = 0 corresponds to the center of the FEM electrode/model region
 
             if self.central_z is None:
                 if self.central_node_z == "random":
-                    central_z[i] = np.random.rand() * length_internode - length_internode / 2
+                    central_z[i] = np.random.rand() * length_internode - length_internode / 2  # introduce random delta z
                 else:
                     central_z[i] = 0.0
             else:
@@ -491,7 +659,7 @@ class MotorFiberPopulation:
 
             locs_nodes_mm = (locs_fiber + central_z[i]) / 1000
             locs_all_nodes[i, :] = locs_nodes_mm
-            locs_ranvier.append(locs_nodes_mm[0::MRG_COMPARTMENTS_PER_INTERNODE])
+            locs_ranvier.append(locs_nodes_mm[0::MRG_COMPARTMENTS_PER_INTERNODE])  # every MRG_COM..INTERNODE node is set as ranvier
 
             node_ids[i, locs_nodes_mm <= -DEFAULT_FEM_LENGTH_MM / 2] = 0
             is_fem_region = np.logical_and(
@@ -510,16 +678,16 @@ class MotorFiberPopulation:
             n_prop[i] = np.sum(ranvier_node_ids == 2)
             n_ubound[i] = np.sum(ranvier_node_ids == 3)
 
-            new_fem_nodes = locs_all_nodes[i, node_ids[i, :] == 1]
+            new_fem_nodes = locs_all_nodes[i, node_ids[i, :] == 1]  # select fiber nodes in the FEM region
             n_new_fem_nodes = new_fem_nodes.size
-            new_fem_nodes = np.hstack(
+            new_fem_nodes = np.hstack(  # these are the fiber compartments in the FEM region
                 (
-                    np.tile(self.locs[i, :], [n_new_fem_nodes, 1]),
-                    np.expand_dims(new_fem_nodes, 1),
+                    np.tile(self.locs[i, :], [n_new_fem_nodes, 1]), # xy coordinates along the FEM PARTITION of the fiber (constant) <= therefore repeat self.locs[i, ] for number of nodes
+                    np.expand_dims(new_fem_nodes, 1), # z coordinates changing along the nerve ONLY IN THE FEM PARTITION
                 )
             )
             locs_fem_nodes.append(new_fem_nodes)
-            fem_node_fiber_ids.append(np.full(n_new_fem_nodes, i, dtype=int))
+            fem_node_fiber_ids.append(np.full(n_new_fem_nodes, i, dtype=int))  # assign all created nodes an index (fiber index)
             self.fem_node_lims[i, :] = [
                 ind_first_node,
                 ind_first_node + n_new_fem_nodes,
@@ -529,7 +697,8 @@ class MotorFiberPopulation:
         self._node_locs = locs_all_nodes
         self._node_ids = node_ids
         self._fem_node_locs = np.vstack(locs_fem_nodes)
-        self._fem_node_fiber_ids = np.hstack(fem_node_fiber_ids)
+        #breakpoint()
+        self._fem_node_fiber_ids = np.hstack(fem_node_fiber_ids) # when new fibers are generated, different number of nodes is included in the FEM partition
         self.n_lbound = n_lbound
         self.n_fem = n_fem
         self.n_prop = n_prop
