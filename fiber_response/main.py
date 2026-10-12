@@ -7,7 +7,7 @@ from fastapi import FastAPI, Request, Depends
 from typing import Annotated
 
 from fiber_response.dependencies import Settings, get_settings
-from fiber_response.routers import files, compute
+from fiber_response.routers import files, compute, experiment
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -17,6 +17,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.include_router(compute.router)
 app.include_router(files.router)
+app.include_router(experiment.router)
 
 
 @app.get("/")
