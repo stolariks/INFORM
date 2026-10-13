@@ -1,6 +1,8 @@
 from pathlib import Path
 import pickle
 import numpy as np
+import io
+import numpy as np
 
 from fastapi import (
     HTTPException, status
@@ -32,6 +34,9 @@ def check_experiment_init(
             "Experiment not initialized"
         )
 
+def to_npz(**arrays) -> bytes:
+    buf = io.BytesIO()
+    return np.savez(buf, **arrays)
 
 def validate_response(
     response: dict

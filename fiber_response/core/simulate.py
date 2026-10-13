@@ -27,7 +27,7 @@ def simulate_fibers(
     fiber_cluster_ids = experiment.fiber_population.cluster_ids
 
     simulation_result = {
-        "recruitment":  recruitment,
+        "recruitments":  recruitment,
         "activations":  activations,
         "potentials":   v_ext,
     }

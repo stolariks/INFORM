@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import io
 
 import numpy as np
-import numpy2 as np2
 
 from fastapi import (
     APIRouter, Depends, Request,
@@ -13,7 +12,9 @@ from fastapi import (
 
 from nerve_model.experiment import Experiment
 from fiber_response.dependencies import Settings, get_settings
-from fiber_response.core.io import load_experiment, check_experiment_init
+from fiber_response.core.io import (
+    load_experiment, check_experiment_init, to_npz
+)
 
 router = APIRouter(
     prefix="/exp",
@@ -86,7 +87,13 @@ async def plot_experiment(request: Request):
 async def get_diameters(request: Request):
     exp = request.app.state.experiment
     check_experiment_init(exp)
-    return np2.serialize(exp.fiber_population.diameters)
+
+    return Response(
+        to_npz(
+            diameters=exp.fiber_population.diameters
+        ),
+        media_type="application/octet-stream"
+    )
 
 @router.get("/fiber/clusters",
             status_code=status.HTTP_200_OK
@@ -95,6 +102,10 @@ async def get_clusters(request: Request):
     exp = request.app.state.experiment
     check_experiment_init(exp)
 
-    return np2.serialize(exp.fiber_population.cluster_ids)
-
+    return Response(
+        to_npz(
+            clusters=exp.fiber_population.clusters
+        ),
+        media_type="application/octet-stream"
+    )
 
