@@ -13,7 +13,7 @@ router = APIRouter(
     tags=["IO"]
 )
 
-@router.get("/files/")
+@router.get("/files")
 async def get_experiment_files(
     settings: Annotated[Settings, Depends(get_settings)]
 ):
@@ -24,7 +24,7 @@ async def get_experiment_files(
         "files": files
     }
 
-@router.post("/upload/",
+@router.post("/upload",
              status_code=status.HTTP_201_CREATED,
              responses={
                  status.HTTP_409_CONFLICT: {"description": "File already exits"}
