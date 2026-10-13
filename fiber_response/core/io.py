@@ -36,7 +36,8 @@ def check_experiment_init(
 
 def to_npz(**arrays) -> bytes:
     buf = io.BytesIO()
-    return np.savez(buf, **arrays)
+    np.savez(buf, **arrays)
+    return buf.getvalue()
 
 def validate_response(
     response: dict
