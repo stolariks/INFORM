@@ -57,6 +57,10 @@ packages = [
 ]
 
 [dependency-groups]
+example = [
+    "httpx>=0.28.1",
+    "numpy>=2.0.2",
+]
 platform = [
     "fastapi[standard]>=0.128.8",
     "pydantic>=2.13.5",
