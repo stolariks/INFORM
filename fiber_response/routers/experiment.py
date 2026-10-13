@@ -11,8 +11,9 @@ from fastapi import (
     status, HTTPException, Response
 )
 
+from nerve_model.experiment import Experiment
 from fiber_response.dependencies import Settings, get_settings
-from fiber_response.core.io import load_experiment
+from fiber_response.core.io import load_experiment, check_experiment_init
 
 router = APIRouter(
     prefix="/exp",
@@ -23,17 +24,13 @@ router = APIRouter(
             status_code=status.HTTP_200_OK,
             responses={
                 status.HTTP_404_NOT_FOUND: {
-                    "description": "Experiment not initialized"
+                    "description": "In case experiment was not yet initialized"
                 }
             }
 )
 async def get_experiment(request: Request):
     exp = request.app.state.experiment
-    if exp is None:
-        raise HTTPException(
-            status.HTTP_404_NOT_FOUND,
-            "Experiment not initialized"
-        )
+    check_experiment_init(exp)
 
     info = {
         "fibers": exp.fiber_population.n_fibers,
@@ -68,11 +65,7 @@ async def load_experiement(
 )
 async def plot_experiment(request: Request):
     exp = request.app.state.experiment
-    if exp is None:
-        raise HTTPException(
-            status.HTTP_404_NOT_FOUND,
-            "Experiment not initialized"
-        )
+    check_experiment_init(exp)
 
     fig = plt.figure(figsize=(10, 10))
     ax = fig.add_subplot()
@@ -87,15 +80,21 @@ async def plot_experiment(request: Request):
     return Response(img_buf.getvalue(), headers=headers, media_type='image/png')
 
 
-@router.get("/diameters",
+@router.get("/fiber/diameters",
             status_code=status.HTTP_200_OK
 )
 async def get_diameters(request: Request):
     exp = request.app.state.experiment
-    if exp is None:
-        raise HTTPException(
-            status.HTTP_404_NOT_FOUND,
-            "Experiment not initialized"
-        )
+    check_experiment_init(exp)
     return np2.serialize(exp.fiber_population.diameters)
+
+@router.get("/fiber/clusters",
+            status_code=status.HTTP_200_OK
+)
+async def get_clusters(request: Request):
+    exp = request.app.state.experiment
+    check_experiment_init(exp)
+
+    return np2.serialize(exp.fiber_population.cluster_ids)
+
 

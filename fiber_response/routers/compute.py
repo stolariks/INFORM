@@ -7,6 +7,7 @@ import numpy as np
 import numpy2 as np2
 
 from fiber_response.schema import ComputeRequest
+from fiber_response.core.io import check_experiment_init
 from fiber_response.core.simulate import (
     prepare_stim_protocol,
     simulate_fibers
@@ -24,11 +25,8 @@ async def run_simulation(
     request: Request
 ):
     experiment = request.app.state.experiment
-    if experiment is None:
-        raise HTTPException(
-            status.HTTP_404_NOT_FOUND,
-            "Experiment is not initialized"
-        )
+    check_experiment_init(experiment)
+
     stimulation_protocol = prepare_stim_protocol(
         compute_request.amplitudes
     )

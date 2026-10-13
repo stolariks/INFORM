@@ -30,7 +30,6 @@ def simulate_fibers(
         "recruitment":  recruitment,
         "activations":  activations,
         "potentials":   v_ext,
-        "cluster_ids":  fiber_cluster_ids
     }
 
     return simulation_result
