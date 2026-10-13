@@ -1,3 +1,13 @@
+"""
+@file: dependencies.py
+@author: Samuel Stolarik
+@description:
+    Platform dependency
+    declaration file
+    (e.g. database,
+    connection or environment
+    file
+"""
 from pathlib import Path
 from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict

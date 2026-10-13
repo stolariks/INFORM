@@ -1,3 +1,11 @@
+"""
+@file: main.py
+@author: Samuel Stolarik
+@description:
+    Platform running
+    code and API declaration
+"""
+
 from pathlib import Path
 from functools import lru_cache
 
@@ -14,7 +22,11 @@ async def lifespan(app: FastAPI):
     app.state.experiment = None
     yield
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    title="Simulation platform",
+    summary="Connector for INFORM",
+    lifespan=lifespan
+)
 app.include_router(compute.router)
 app.include_router(files.router)
 app.include_router(experiment.router)

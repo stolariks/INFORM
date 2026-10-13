@@ -1,3 +1,12 @@
+"""
+@file: compute.py
+@author: Samuel Stolarik
+@description:
+    FastAPI router for
+    simulation compute
+    related endpoints
+"""
+
 from fastapi import (
     APIRouter, Request, HTTPException,
     status, Response
@@ -18,8 +27,15 @@ router = APIRouter(
 )
 
 
-@router.put("/simulate")
-async def run_simulation(
+@router.put("/simulate",
+             responses={
+                 200: {
+                     "content": {"application/octet-stream": {}},
+                     "description": "NPZ with recruitments, activations, potentials"
+                 }
+             }
+)
+def run_simulation(
     compute_request: ComputeRequest,
     request: Request
 ):

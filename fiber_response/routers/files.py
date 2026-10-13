@@ -1,3 +1,12 @@
+"""
+@file: files.py
+@author: Samuel Stolarik
+@description:
+    FastAPI router for
+    experiment .pkl file
+    listing and uploading
+"""
+
 from fastapi import (
     APIRouter, Depends, UploadFile, File,
     HTTPException, status

@@ -1,3 +1,15 @@
+"""
+@file: experiment.py
+@author: Samuel Stolarik
+@description:
+    FastAPI router for
+    simulation experiment
+    loading and information
+    processing (i.e. plot,
+    get fiber information,
+    ...)
+"""
+
 from pathlib import Path
 from typing import Annotated
 import matplotlib.pyplot as plt

@@ -206,6 +206,8 @@ def load_experiments(args: argparse.Namespace):
     (surrogate_base_path / "results").mkdir(parents=True, exist_ok=True)
 
     inferred_experiment_path = surrogate_base_path / f"experiment_trial_{args.trial}.pkl"
+    print("Loading full inferred experiment from:\n\t{inferred_experiment_path}")
+
     full_inferred_experiment = load_pickle(inferred_experiment_path)
 
     return full_inferred_experiment, true_base_path, surrogate_base_path, colors
@@ -359,6 +361,7 @@ def build_inferred_experiment(
     cluster_num_inferred,
 ):
     """Create inferred population and experiment from localized parameters."""
+    #breakpoint()
     inferred_population, inferred_identities = MotorFiberPopulation.from_existing_population(
         cluster_locs=cluster_locs_inferred,
         cluster_std=cluster_std_inferred,
@@ -395,14 +398,19 @@ def run_population(
 ) -> None:
     """Run localization for one population."""
     population_file = true_base_path / get_population_filename(args, population_id)
+    print(f"Loaded population file\n\t{population_file}")
+
     true_experiment = load_pickle(population_file)
+    #breakpoint()
+
+    print(f"True experiment:\n\t{true_experiment}")
 
     n_clusters = true_experiment.fiber_population.n_groups
     mean_locs_x = true_experiment.fiber_population.cluster_locs[:, 0]
     mean_locs_y = true_experiment.fiber_population.cluster_locs[:, 1]
     empirical_std = true_experiment.fiber_population.cluster_std
 
-    reference_rc = compute_reference_recruitment_curves(true_experiment, args)
+    reference_rc = compute_reference_recruitment_curves(true_experiment, args)  # TODO: what is reference?
     reference_rc_values = reference_rc.recruitment_values
     amplitudes = reference_rc.amplitudes
 
@@ -445,6 +453,7 @@ def run_population(
         cluster_num_inferred=cluster_num_inferred,
     )
 
+    ## Infered experiment contains lead field matrix (n_fem_nodes, n_active_sites)
     inferred_recruitment_curves = inferred_experiment.generate_recruitment_curves(
         amp_lims=np.array([args.min_stim, args.max_stim]),
         n_steps=args.n_stims_per_site,
@@ -461,6 +470,8 @@ def run_population(
             colors=colors,
             title="Recruitment curves reconstructed",
         )
+        print("saving plots to:")
+        print(surrogate_base_path / "results" / f"reconstructed_rc_pop_{population_id}.png")
         fig.savefig(surrogate_base_path / "results" / f"reconstructed_rc_pop_{population_id}.png", dpi=300)
         plt.close(fig)
 
@@ -492,6 +503,7 @@ def main() -> None:
 
     full_inferred_experiment, true_base_path, surrogate_base_path, colors = load_experiments(args)
 
+    #breakpoint()
     for population_id in range(args.population_start, args.population_stop):
         print(f"Running population {population_id}")
         run_population(

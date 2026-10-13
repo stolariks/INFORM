@@ -1,3 +1,12 @@
+"""
+@file: simulate.py
+@author: Samuel Stolarik
+@description:
+    Simulation code which
+    communicates with the
+    original model code
+"""
+
 import scipy
 import numpy as np
 

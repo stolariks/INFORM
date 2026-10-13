@@ -1,3 +1,11 @@
+"""
+@file: io.py
+@author: Samuel Stolarik
+@description:
+    Basic IO operations
+    required for the platform
+"""
+
 from pathlib import Path
 import pickle
 import numpy as np
