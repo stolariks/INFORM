@@ -116,7 +116,7 @@ async def get_clusters(request: Request):
 
     return Response(
         to_npz(
-            clusters=exp.fiber_population.clusters
+            clusters=exp.fiber_population.cluster_ids
         ),
         media_type="application/octet-stream"
     )
