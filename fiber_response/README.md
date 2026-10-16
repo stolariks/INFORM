@@ -28,6 +28,25 @@ For examples on how to connect and use the platform programatically see examples
 
 along with acording `README.md` file on how to use them.
 
+## Platform frontend
+
+For inspecting and loading experiment `.pkl` files, it might be convenient to use simple frontend which is included.
+
+The frontend allows the user to:
+
+* manage (upload and delete) experiment file which are available to the server,
+* load experiment information in a simple manner,
+* generate plots of the fiber specific fiber population and clusters used in theat given experiment.
+
+Before usage the frontend needs to be built manually. For that make sure that you have `npm` installed and run the following:
+
+```sh
+cd frontend
+npm install && npm run build
+```
+
+after a succesful installation, just run the server as you always would (see above) and the frontend will be available at `localhost:8000/` in your browser.
+
 ## Data management
 
 Data folder used by the platform to load and store experiment files is set using the `DATA_DIR` environment variable.
